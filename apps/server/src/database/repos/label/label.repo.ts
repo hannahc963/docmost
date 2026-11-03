@@ -92,6 +92,36 @@ export class LabelRepo {
       .executeTakeFirst();
   }
 
+  async updateName(
+    labelId: string,
+    workspaceId: string,
+    name: string,
+    trx?: KyselyTransaction,
+  ): Promise<Label | undefined> {
+    const db = dbOrTx(this.db, trx);
+    return db
+      .updateTable('labels')
+      .set({ name: normalizeLabelName(name) })
+      .where('id', '=', labelId)
+      .where('workspaceId', '=', workspaceId)
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  async findPageReferencesByLabel(
+    labelId: string,
+    workspaceId: string,
+  ): Promise<Array<{ id: string; spaceId: string }>> {
+    return this.db
+      .selectFrom('pageLabels')
+      .innerJoin('pages', 'pages.id', 'pageLabels.pageId')
+      .select(['pages.id', 'pages.spaceId'])
+      .distinct()
+      .where('pageLabels.labelId', '=', labelId)
+      .where('pages.workspaceId', '=', workspaceId)
+      .execute();
+  }
+
   async findLabelsByPageId(pageId: string, pagination: PaginationOptions) {
     const query = this.db
       .selectFrom('labels')

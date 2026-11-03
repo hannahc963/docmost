@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Label } from '@docmost/db/types/entity.types';
 import { LabelRepo, LabelType } from '@docmost/db/repos/label/label.repo';
 import { InjectKysely } from 'nestjs-kysely';
@@ -7,8 +11,8 @@ import { executeTx } from '@docmost/db/utils';
 import { PaginationOptions } from '@docmost/db/pagination/pagination-options';
 import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 import { normalizeLabelName } from './utils';
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { EventName } from "src/common/events/event.contants";
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventName } from 'src/common/events/event.contants';
 
 @Injectable()
 export class LabelService {
@@ -44,7 +48,7 @@ export class LabelService {
       pageIds: [pageId],
       workspaceId: workspaceId,
     });
-    
+
     return attached;
   }
 
@@ -58,6 +62,53 @@ export class LabelService {
       throw new NotFoundException('Label not found');
     }
     return label;
+  }
+
+  async renameLabel(
+    labelId: string,
+    name: string,
+    workspaceId: string,
+  ): Promise<Label> {
+    try {
+      return await executeTx(this.db, async (trx) => {
+        const label = await this.labelRepo.findById(labelId, trx);
+        if (!label || label.workspaceId !== workspaceId) {
+          throw new NotFoundException('Label not found');
+        }
+
+        const normalizedName = normalizeLabelName(name);
+        const existing = await this.labelRepo.findByNameAndWorkspace(
+          normalizedName,
+          workspaceId,
+          LabelType.PAGE,
+          trx,
+        );
+        if (existing && existing.id !== label.id) {
+          throw new ConflictException('A label with this name already exists');
+        }
+
+        const updated = await this.labelRepo.updateName(
+          label.id,
+          workspaceId,
+          normalizedName,
+          trx,
+        );
+        if (!updated) {
+          throw new NotFoundException('Label not found');
+        }
+        return updated;
+      });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
+        throw new ConflictException('A label with this name already exists');
+      }
+      throw error;
+    }
   }
 
   async removeLabelFromPage(
@@ -104,12 +155,7 @@ export class LabelService {
     type: LabelType,
     pagination: PaginationOptions,
   ) {
-    return this.labelRepo.findLabels(
-      workspaceId,
-      userId,
-      type,
-      pagination,
-    );
+    return this.labelRepo.findLabels(workspaceId, userId, type, pagination);
   }
 
   async findPagesByLabel(
@@ -121,14 +167,20 @@ export class LabelService {
       pagination: PaginationOptions;
     },
   ) {
-    const result = await this.labelRepo.findPagesByLabelId(labelId, userId, opts);
+    const result = await this.labelRepo.findPagesByLabelId(
+      labelId,
+      userId,
+      opts,
+    );
     if (result.items.length === 0) return result;
 
-    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds({
-      pageIds: result.items.map((p) => p.id),
-      userId,
-      spaceId: opts.spaceId,
-    });
+    const accessibleIds = await this.pagePermissionRepo.filterAccessiblePageIds(
+      {
+        pageIds: result.items.map((p) => p.id),
+        userId,
+        spaceId: opts.spaceId,
+      },
+    );
     const accessible = new Set(accessibleIds);
     return {
       items: result.items.filter((p) => accessible.has(p.id)),
@@ -153,11 +205,7 @@ export class LabelService {
     // Uniform response shape.
     // We don't want to expose whether the label row exists
     const usageCount = label
-      ? await this.labelRepo.getLabelPageCountForUser(
-          label.id,
-          userId,
-          spaceId,
-        )
+      ? await this.labelRepo.getLabelPageCountForUser(label.id, userId, spaceId)
       : 0;
 
     return {
