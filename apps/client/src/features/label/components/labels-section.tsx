@@ -9,7 +9,9 @@ import {
   useAddLabelsMutation,
   usePageLabelsQuery,
   useRemoveLabelMutation,
+  useUpdateLabelColorMutation,
 } from "@/features/label/queries/label-query.ts";
+import type { LabelColorName } from "@/features/label/utils/label-colors.ts";
 import classes from "@/features/label/label.module.css";
 
 type LabelsSectionProps = {
@@ -24,6 +26,7 @@ export function LabelsSection({ pageId, canEdit }: LabelsSectionProps) {
   const { data } = usePageLabelsQuery(pageId);
   const addMutation = useAddLabelsMutation(pageId);
   const removeMutation = useRemoveLabelMutation(pageId);
+  const updateColorMutation = useUpdateLabelColorMutation(pageId);
 
   const labels = data?.items ?? [];
 
@@ -31,8 +34,12 @@ export function LabelsSection({ pageId, canEdit }: LabelsSectionProps) {
     return null;
   }
 
-  const handleAdd = (name: string) => {
-    addMutation.mutate({ pageId, names: [name] });
+  const handleAdd = (name: string, color?: LabelColorName) => {
+    addMutation.mutate({ pageId, names: [name], color });
+  };
+
+  const handleColorChange = (labelId: string, color: LabelColorName) => {
+    updateColorMutation.mutate({ pageId, labelId, color });
   };
 
   const handleRemove = (labelId: string) => {
@@ -52,6 +59,11 @@ export function LabelsSection({ pageId, canEdit }: LabelsSectionProps) {
               key={label.id}
               label={label}
               asLink
+              onChangeColor={
+                canEdit
+                  ? (color) => handleColorChange(label.id, color)
+                  : undefined
+              }
               onRemove={canEdit ? () => handleRemove(label.id) : undefined}
             />
           ))}
@@ -80,7 +92,7 @@ export function LabelsSection({ pageId, canEdit }: LabelsSectionProps) {
                 <LabelPicker
                   applied={labels}
                   enabled={open}
-                  onAdd={(name) => handleAdd(name)}
+                  onAdd={handleAdd}
                   onClose={() => setOpen(false)}
                 />
               </Popover.Dropdown>

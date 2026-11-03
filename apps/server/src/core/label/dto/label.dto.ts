@@ -34,11 +34,23 @@ export class AddLabelsDto extends PageIdDto {
       'Label names can only contain letters, numbers, hyphens, underscores, and tildes, and cannot start with a tilde',
   })
   names: string[];
+
+  @IsOptional()
+  @IsIn(['slate', 'blue', 'green', 'amber', 'red', 'purple', 'pink', 'teal'])
+  color?: string;
 }
 
 export class RemoveLabelDto extends PageIdDto {
   @IsUUID()
   labelId: string;
+}
+
+export class UpdateLabelColorDto extends PageIdDto {
+  @IsUUID()
+  labelId: string;
+
+  @IsIn(['slate', 'blue', 'green', 'amber', 'red', 'purple', 'pink', 'teal'])
+  color: string;
 }
 
 export class FindPagesByLabelDto {

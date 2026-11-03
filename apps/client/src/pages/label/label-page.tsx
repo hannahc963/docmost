@@ -28,13 +28,16 @@ import { SpaceFilterMenu } from "@/features/space/components/space-filter-menu.t
 import { EmptyState } from "@/components/ui/empty-state";
 import classes from "@/features/label/label.module.css";
 import { DocumentTitle } from "@/components/ui/document-title.tsx";
+import { useWorkspaceLabelsQuery } from "@/features/label/queries/label-query.ts";
 
 export default function LabelPage() {
   const { t } = useTranslation();
   const { labelName: rawName } = useParams<{ labelName: string }>();
   const labelName = normalizeLabelName(decodeURIComponent(rawName ?? ""));
   const scheme = useComputedColorScheme("light");
-  const c = getLabelColor(labelName, scheme);
+  const { data: workspaceLabels } = useWorkspaceLabelsQuery(labelName, true);
+  const label = workspaceLabels?.items.find((item) => item.name === labelName);
+  const c = getLabelColor(labelName, scheme, label?.color);
 
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [search, setSearch] = useState("");

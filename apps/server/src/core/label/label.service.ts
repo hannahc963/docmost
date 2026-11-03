@@ -23,6 +23,7 @@ export class LabelService {
     pageId: string,
     names: string[],
     workspaceId: string,
+    color?: string,
   ): Promise<Label[]> {
     const attached: Label[] = [];
     await executeTx(this.db, async (trx) => {
@@ -32,6 +33,7 @@ export class LabelService {
           workspaceId,
           LabelType.PAGE,
           trx,
+          color,
         );
         await this.labelRepo.addLabelToPage(pageId, label.id, trx);
         attached.push(label);
@@ -44,6 +46,18 @@ export class LabelService {
     });
     
     return attached;
+  }
+
+  async updateLabelColor(
+    labelId: string,
+    color: string,
+    workspaceId: string,
+  ): Promise<Label> {
+    const label = await this.labelRepo.updateColor(labelId, workspaceId, color);
+    if (!label) {
+      throw new NotFoundException('Label not found');
+    }
+    return label;
   }
 
   async removeLabelFromPage(

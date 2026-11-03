@@ -1,10 +1,12 @@
 import { QueryParams } from "@/lib/types.ts";
+import { LabelColorName } from "@/features/label/utils/label-colors.ts";
 
 export type LabelType = "page" | "space";
 
 export interface ILabel {
   id: string;
   name: string;
+  color: LabelColorName | null;
   type: LabelType;
   workspaceId: string;
   createdAt: string;
@@ -14,6 +16,13 @@ export interface ILabel {
 export interface IAddLabels {
   pageId: string;
   names: string[];
+  color?: LabelColorName;
+}
+
+export interface IUpdateLabelColor {
+  pageId: string;
+  labelId: string;
+  color: LabelColorName;
 }
 
 export interface IRemoveLabel {
@@ -54,7 +63,7 @@ export interface ILabelPageItem {
     logo: string | null;
   } | null;
   creator: { id: string; name: string; avatarUrl: string | null } | null;
-  labels: { id: string; name: string }[];
+  labels: { id: string; name: string; color: LabelColorName | null }[];
 }
 
 export interface IFindPagesByLabelParams extends QueryParams {

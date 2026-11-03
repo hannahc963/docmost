@@ -42,7 +42,11 @@ import { DuplicatePageDto } from './dto/duplicate-page.dto';
 import { DeletedPageDto } from './dto/deleted-page.dto';
 import { BacklinksListDto } from './dto/backlink.dto';
 import { LabelService } from '../label/label.service';
-import { AddLabelsDto, RemoveLabelDto } from '../label/dto/label.dto';
+import {
+  AddLabelsDto,
+  RemoveLabelDto,
+  UpdateLabelColorDto,
+} from '../label/dto/label.dto';
 import {
   jsonToHtml,
   jsonToMarkdown,
@@ -139,6 +143,28 @@ export class PageController {
     return this.labelService.addLabelsToPage(
       page.id,
       dto.names,
+      workspace.id,
+      dto.color,
+    );
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('labels/color')
+  async updatePageLabelColor(
+    @Body() dto: UpdateLabelColorDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const page = await this.pageRepo.findById(dto.pageId);
+    if (!page || page.deletedAt) {
+      throw new NotFoundException('Page not found');
+    }
+
+    await this.pageAccessService.validateCanEdit(page, user);
+
+    return this.labelService.updateLabelColor(
+      dto.labelId,
+      dto.color,
       workspace.id,
     );
   }

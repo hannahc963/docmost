@@ -56,6 +56,7 @@ export class LabelRepo {
     workspaceId: string,
     type: LabelType,
     trx?: KyselyTransaction,
+    color?: string,
   ): Promise<Label> {
     const db = dbOrTx(this.db, trx);
     const normalizedName = normalizeLabelName(name);
@@ -65,14 +66,30 @@ export class LabelRepo {
     // row inserted by a concurrent transaction. The set is a no-op write.
     return db
       .insertInto('labels')
-      .values({ name: normalizedName, type, workspaceId })
+      .values({ name: normalizedName, type, workspaceId, color })
       .onConflict((oc) =>
         oc
           .columns(['name', 'type', 'workspaceId'])
-          .doUpdateSet({ name: normalizedName }),
+          .doUpdateSet({ name: normalizedName, ...(color ? { color } : {}) }),
       )
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  async updateColor(
+    labelId: string,
+    workspaceId: string,
+    color: string,
+    trx?: KyselyTransaction,
+  ): Promise<Label | undefined> {
+    const db = dbOrTx(this.db, trx);
+    return db
+      .updateTable('labels')
+      .set({ color })
+      .where('id', '=', labelId)
+      .where('workspaceId', '=', workspaceId)
+      .returningAll()
+      .executeTakeFirst();
   }
 
   async findLabelsByPageId(pageId: string, pagination: PaginationOptions) {
@@ -82,6 +99,7 @@ export class LabelRepo {
       .select([
         'labels.id',
         'labels.name',
+        'labels.color',
         'labels.type',
         'labels.createdAt',
         'labels.updatedAt',
@@ -122,7 +140,15 @@ export class LabelRepo {
     // further — labels are a space-level concept, not a page-level one.
     let query = this.db
       .selectFrom('labels')
-      .select(['id', 'name', 'type', 'createdAt', 'updatedAt', 'workspaceId'])
+      .select([
+        'id',
+        'name',
+        'color',
+        'type',
+        'createdAt',
+        'updatedAt',
+        'workspaceId',
+      ])
       .where('workspaceId', '=', workspaceId)
       .where('type', '=', type)
       .where(
@@ -305,7 +331,7 @@ export class LabelRepo {
           eb
             .selectFrom('labels')
             .innerJoin('pageLabels as pl', 'pl.labelId', 'labels.id')
-            .select(['labels.id', 'labels.name'])
+            .select(['labels.id', 'labels.name', 'labels.color'])
             .whereRef('pl.pageId', '=', 'pages.id')
             .where('labels.type', '=', LabelType.PAGE)
             .orderBy('pl.id', 'asc'),

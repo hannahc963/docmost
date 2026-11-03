@@ -24,6 +24,31 @@
   letter-spacing: 0.005em;
 }
 
+.chipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chipColorButton {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 16px;
+  height: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.chipColorButton:hover {
+  background: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.12));
+}
+
 .chipX {
   appearance: none;
   border: 0;
@@ -174,6 +199,41 @@
   align-items: center;
   justify-content: center;
   color: var(--mantine-color-dimmed);
+}
+
+.createColor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid
+    light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+}
+
+.colorPicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.colorOption {
+  appearance: none;
+  border: 2px solid transparent;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px
+    light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.2));
+}
+
+.colorOption[aria-pressed="true"] {
+  outline: 2px solid var(--mantine-color-text);
+  outline-offset: 2px;
 }
 
 .headerChip {

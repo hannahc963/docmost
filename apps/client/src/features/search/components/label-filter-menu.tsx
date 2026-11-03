@@ -93,7 +93,7 @@ export function LabelFilterMenu({
 
           {labels.map((label) => {
             const isChecked = selectedSet.has(label.id);
-            const color = getLabelColor(label.name, scheme);
+            const color = getLabelColor(label.name, scheme, label.color);
             return (
               <Menu.Item
                 key={label.id}

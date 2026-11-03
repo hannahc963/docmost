@@ -574,6 +574,7 @@ export interface IntegrationConnections {
 export interface Labels {
   id: Generated<string>;
   name: string;
+  color: string | null;
   type: Generated<string>;
   workspaceId: string;
   createdAt: Generated<Timestamp>;
