@@ -12,13 +12,11 @@ import {
   getPageLabels,
   getWorkspaceLabels,
   removeLabelFromPage,
-  updateLabelColor,
 } from "@/features/label/services/label-service.ts";
 import {
   IAddLabels,
   ILabel,
   IRemoveLabel,
-  IUpdateLabelColor,
 } from "@/features/label/types/label.types.ts";
 import { IPagination } from "@/lib/types.ts";
 import { notifications } from "@mantine/notifications";
@@ -85,37 +83,6 @@ export function useAddLabelsMutation(pageId: string | undefined) {
     onError: (error: any) => {
       notifications.show({
         message: error?.response?.data?.message ?? t("Failed to add label"),
-        color: "red",
-      });
-    },
-  });
-}
-
-export function useUpdateLabelColorMutation(pageId: string | undefined) {
-  const queryClient = useQueryClient();
-  const { t } = useTranslation();
-
-  return useMutation<ILabel, Error, IUpdateLabelColor>({
-    mutationFn: updateLabelColor,
-    onSuccess: (updated) => {
-      queryClient.setQueryData<IPagination<ILabel>>(
-        PAGE_LABELS_KEY(pageId ?? ""),
-        (cache) =>
-          cache && {
-            ...cache,
-            items: cache.items.map((label) =>
-              label.id === updated.id ? updated : label,
-            ),
-          },
-      );
-      queryClient.invalidateQueries({ queryKey: ["page-labels"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace-labels"] });
-      queryClient.invalidateQueries({ queryKey: ["label-pages"] });
-    },
-    onError: (error: any) => {
-      notifications.show({
-        message:
-          error?.response?.data?.message ?? t("Failed to update label color"),
         color: "red",
       });
     },

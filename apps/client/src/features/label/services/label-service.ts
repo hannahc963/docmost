@@ -10,7 +10,6 @@ import {
   IListLabelsParams,
   IPageLabelsParams,
   IRemoveLabel,
-  IUpdateLabelColor,
 } from "@/features/label/types/label.types.ts";
 
 export async function getPageLabels(
@@ -36,13 +35,6 @@ export async function addLabelsToPage(
 
 export async function removeLabelFromPage(data: IRemoveLabel): Promise<void> {
   await api.post("/pages/labels/remove", data);
-}
-
-export async function updateLabelColor(
-  data: IUpdateLabelColor,
-): Promise<ILabel> {
-  const req = await api.post<ILabel>("/pages/labels/color", data);
-  return req.data;
 }
 
 export async function getLabelInfo(

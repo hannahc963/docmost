@@ -3,18 +3,16 @@ import clsx from "clsx";
 import { IconPlus } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useComputedColorScheme } from "@mantine/core";
-import type { ILabel } from "@/features/label/types/label.types.ts";
+import { ILabel } from "@/features/label/types/label.types.ts";
 import { useWorkspaceLabelsQuery } from "@/features/label/queries/label-query.ts";
 import { getLabelColor } from "@/features/label/utils/label-colors.ts";
-import type { LabelColorName } from "@/features/label/utils/label-colors.ts";
-import { LabelColorPicker } from "@/features/label/components/label-color-picker.tsx";
 import { normalizeLabelName } from "@/features/label/utils/normalize-label.ts";
 import classes from "@/features/label/label.module.css";
 
 type LabelPickerProps = {
   applied: ILabel[];
   enabled: boolean;
-  onAdd: (name: string, color?: LabelColorName) => void;
+  onAdd: (name: string) => void;
   onClose: () => void;
 };
 
@@ -39,9 +37,6 @@ export function LabelPicker({
   const scheme = useComputedColorScheme("light");
   const [query, setQuery] = useState("");
   const [hover, setHover] = useState(0);
-  const [selectedColor, setSelectedColor] = useState<LabelColorName | null>(
-    null,
-  );
   const inputRef = useRef<HTMLInputElement>(null);
 
   const normalized = normalizeLabelName(query);
@@ -67,11 +62,10 @@ export function LabelPicker({
     if (idx < suggestions.length) {
       onAdd(suggestions[idx].name);
     } else if (canCreate) {
-      onAdd(normalized, selectedColor ?? undefined);
+      onAdd(normalized);
     }
     setQuery("");
     setHover(0);
-    setSelectedColor(null);
     inputRef.current?.focus();
   };
 
@@ -110,15 +104,6 @@ export function LabelPicker({
         />
       </div>
       <div className={classes.popoverList}>
-        {canCreate && (
-          <div className={classes.createColor}>
-            <span>{t("Color")}</span>
-            <LabelColorPicker
-              value={selectedColor}
-              onChange={setSelectedColor}
-            />
-          </div>
-        )}
         {total === 0 && (
           <div className={classes.popoverEmpty}>
             {normalized.length === 0
@@ -131,7 +116,7 @@ export function LabelPicker({
           </div>
         )}
         {suggestions.map((s, i) => {
-          const c = getLabelColor(s.name, scheme, s.color);
+          const c = getLabelColor(s.name, scheme);
           return (
             <button
               key={s.id}
