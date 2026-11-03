@@ -25,11 +25,6 @@ export interface IUpdateLabelColor {
   color: LabelColorName;
 }
 
-export interface IRenameLabel {
-  currentName: string;
-  name: string;
-}
-
 export interface IRemoveLabel {
   pageId: string;
   labelId: string;

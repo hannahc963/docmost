@@ -11,7 +11,6 @@ import {
   getLabelInfo,
   getPageLabels,
   getWorkspaceLabels,
-  renameLabel,
   removeLabelFromPage,
   updateLabelColor,
 } from "@/features/label/services/label-service.ts";
@@ -19,7 +18,6 @@ import {
   IAddLabels,
   ILabel,
   IRemoveLabel,
-  IRenameLabel,
   IUpdateLabelColor,
 } from "@/features/label/types/label.types.ts";
 import { IPagination } from "@/lib/types.ts";
@@ -27,10 +25,7 @@ import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 
 const PAGE_LABELS_KEY = (pageId: string) => ["page-labels", pageId];
-const WORKSPACE_LABELS_KEY = (query?: string) => [
-  "workspace-labels",
-  query ?? "",
-];
+const WORKSPACE_LABELS_KEY = (query?: string) => ["workspace-labels", query ?? ""];
 
 export function usePageLabelsQuery(pageId: string | undefined) {
   return useQuery({
@@ -46,7 +41,7 @@ export function useWorkspaceLabelsQuery(query: string, enabled: boolean) {
     queryFn: () => getWorkspaceLabels({ type: "page", query, limit: 50 }),
     enabled,
     staleTime: 30 * 1000,
-    placeholderData: keepPreviousData,
+    placeholderData: keepPreviousData
   });
 }
 
@@ -121,27 +116,6 @@ export function useUpdateLabelColorMutation(pageId: string | undefined) {
       notifications.show({
         message:
           error?.response?.data?.message ?? t("Failed to update label color"),
-        color: "red",
-      });
-    },
-  });
-}
-
-export function useRenameLabelMutation() {
-  const queryClient = useQueryClient();
-  const { t } = useTranslation();
-
-  return useMutation<ILabel, Error, IRenameLabel>({
-    mutationFn: renameLabel,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workspace-labels"] });
-      queryClient.invalidateQueries({ queryKey: ["page-labels"] });
-      queryClient.invalidateQueries({ queryKey: ["label-pages"] });
-      queryClient.invalidateQueries({ queryKey: ["label-info"] });
-    },
-    onError: (error: any) => {
-      notifications.show({
-        message: error?.response?.data?.message ?? t("Failed to rename label"),
         color: "red",
       });
     },

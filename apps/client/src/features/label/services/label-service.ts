@@ -10,7 +10,6 @@ import {
   IListLabelsParams,
   IPageLabelsParams,
   IRemoveLabel,
-  IRenameLabel,
   IUpdateLabelColor,
 } from "@/features/label/types/label.types.ts";
 
@@ -28,7 +27,9 @@ export async function getWorkspaceLabels(
   return req.data;
 }
 
-export async function addLabelsToPage(data: IAddLabels): Promise<ILabel[]> {
+export async function addLabelsToPage(
+  data: IAddLabels,
+): Promise<ILabel[]> {
   const req = await api.post<ILabel[]>("/pages/labels/add", data);
   return req.data;
 }
@@ -41,11 +42,6 @@ export async function updateLabelColor(
   data: IUpdateLabelColor,
 ): Promise<ILabel> {
   const req = await api.post<ILabel>("/pages/labels/color", data);
-  return req.data;
-}
-
-export async function renameLabel(data: IRenameLabel): Promise<ILabel> {
-  const req = await api.post<ILabel>("/labels/rename", data);
   return req.data;
 }
 

@@ -14,7 +14,6 @@ import {
   FindPagesByLabelDto,
   LabelInfoDto,
   ListLabelsDto,
-  RenameLabelDto,
 } from './dto/label.dto';
 import { AuthUser } from '../../common/decorators/auth-user.decorator';
 import { AuthWorkspace } from '../../common/decorators/auth-workspace.decorator';
@@ -28,7 +27,6 @@ import {
   SpaceCaslAction,
   SpaceCaslSubject,
 } from '../casl/interfaces/space-ability.type';
-import { PagePermissionRepo } from '@docmost/db/repos/page/page-permission.repo';
 
 @UseGuards(JwtAuthGuard)
 @Controller('labels')
@@ -37,7 +35,6 @@ export class LabelController {
     private readonly labelService: LabelService,
     private readonly labelRepo: LabelRepo,
     private readonly spaceAbility: SpaceAbilityFactory,
-    private readonly pagePermissionRepo: PagePermissionRepo,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -54,48 +51,6 @@ export class LabelController {
       dto.type,
       pagination,
     );
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('rename')
-  async renameLabel(
-    @Body() dto: RenameLabelDto,
-    @AuthUser() user: User,
-    @AuthWorkspace() workspace: Workspace,
-  ) {
-    const label = await this.labelRepo.findByNameAndWorkspace(
-      dto.currentName,
-      workspace.id,
-      LabelType.PAGE,
-    );
-    if (!label) {
-      throw new NotFoundException('Label not found');
-    }
-
-    const pageReferences = await this.labelRepo.findPageReferencesByLabel(
-      label.id,
-      workspace.id,
-    );
-    const pagePermissions =
-      await this.pagePermissionRepo.filterAccessiblePageIdsWithPermissions(
-        pageReferences.map((page) => page.id),
-        user.id,
-      );
-    if (
-      pagePermissions.length !== pageReferences.length ||
-      pagePermissions.some((page) => !page.canEdit)
-    ) {
-      throw new ForbiddenException();
-    }
-
-    for (const spaceId of new Set(pageReferences.map((page) => page.spaceId))) {
-      const ability = await this.spaceAbility.createForUser(user, spaceId);
-      if (ability.cannot(SpaceCaslAction.Edit, SpaceCaslSubject.Page)) {
-        throw new ForbiddenException();
-      }
-    }
-
-    return this.labelService.renameLabel(label.id, dto.name, workspace.id);
   }
 
   @HttpCode(HttpStatus.OK)

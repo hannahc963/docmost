@@ -53,32 +53,6 @@ export class UpdateLabelColorDto extends PageIdDto {
   color: string;
 }
 
-export class RenameLabelDto {
-  @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? normalizeLabelName(value) : value,
-  )
-  @MaxLength(100)
-  @Matches(/^[a-z0-9_-][a-z0-9_~-]*$/, {
-    message:
-      'Label names can only contain letters, numbers, hyphens, underscores, and tildes, and cannot start with a tilde',
-  })
-  currentName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? normalizeLabelName(value) : value,
-  )
-  @MaxLength(100)
-  @Matches(/^[a-z0-9_-][a-z0-9_~-]*$/, {
-    message:
-      'Label names can only contain letters, numbers, hyphens, underscores, and tildes, and cannot start with a tilde',
-  })
-  name: string;
-}
-
 export class FindPagesByLabelDto {
   @IsOptional()
   @IsUUID()

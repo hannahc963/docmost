@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActionIcon,
   Button,
   Center,
   Container,
   Group,
   Loader,
-  Modal,
   Stack,
   Text,
   TextInput,
@@ -15,16 +13,12 @@ import {
 import {
   IconChevronDown,
   IconLabel,
-  IconPencil,
   IconSearch,
 } from "@tabler/icons-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import {
-  useLabelPagesQuery,
-  useRenameLabelMutation,
-} from "@/features/label/queries/label-query.ts";
+import { useDebouncedValue } from "@mantine/hooks";
+import { useLabelPagesQuery } from "@/features/label/queries/label-query.ts";
 import { useGetSpacesQuery } from "@/features/space/queries/space-query.ts";
 import { getLabelColor } from "@/features/label/utils/label-colors.ts";
 import { LabelPageRow } from "@/features/label/components/label-page-row.tsx";
@@ -40,16 +34,10 @@ export default function LabelPage() {
   const { t } = useTranslation();
   const { labelName: rawName } = useParams<{ labelName: string }>();
   const labelName = normalizeLabelName(decodeURIComponent(rawName ?? ""));
-  const navigate = useNavigate();
   const scheme = useComputedColorScheme("light");
   const { data: workspaceLabels } = useWorkspaceLabelsQuery(labelName, true);
   const label = workspaceLabels?.items.find((item) => item.name === labelName);
   const c = getLabelColor(labelName, scheme, label?.color);
-  const [renameOpened, { open: openRename, close: closeRename }] =
-    useDisclosure(false);
-  const [renameValue, setRenameValue] = useState(labelName);
-  const [renameError, setRenameError] = useState<string | null>(null);
-  const renameMutation = useRenameLabelMutation();
 
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -94,30 +82,6 @@ export default function LabelPage() {
     return spaces.find((s) => s.id === spaceId)?.name ?? t("All spaces");
   }, [spaceId, spaces, t]);
 
-  const handleRename = () => {
-    if (renameMutation.isPending) return;
-    const name = normalizeLabelName(renameValue);
-    if (!/^[a-z0-9_-][a-z0-9_~-]*$/.test(name) || name.length > 100) {
-      setRenameError(
-        t("Use letters, numbers, hyphens, underscores, or tildes."),
-      );
-      return;
-    }
-
-    setRenameError(null);
-    renameMutation.mutate(
-      { currentName: labelName, name },
-      {
-        onSuccess: (updated) => {
-          closeRename();
-          navigate(`/labels/${encodeURIComponent(updated.name)}`, {
-            replace: true,
-          });
-        },
-      },
-    );
-  };
-
   return (
     <>
       <DocumentTitle title={labelName} />
@@ -145,20 +109,6 @@ export default function LabelPage() {
                 />
                 <span>{labelName}</span>
               </Link>
-              {label && (
-                <ActionIcon
-                  variant="subtle"
-                  aria-label={t("Rename label")}
-                  title={t("Rename label")}
-                  onClick={() => {
-                    setRenameValue(labelName);
-                    setRenameError(null);
-                    openRename();
-                  }}
-                >
-                  <IconPencil size={16} color="black"/>
-                </ActionIcon>
-              )}
             </Group>
           </Stack>
 
@@ -223,42 +173,6 @@ export default function LabelPage() {
           )}
         </Stack>
       </Container>
-
-      <Modal
-        opened={renameOpened}
-        onClose={closeRename}
-        title={t("Rename label")}
-      >
-        <TextInput
-          label={t("Label name")}
-          value={renameValue}
-          onChange={(event) => {
-            setRenameValue(event.currentTarget.value);
-            setRenameError(null);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !renameMutation.isPending) {
-              event.preventDefault();
-              handleRename();
-            }
-          }}
-          maxLength={100}
-          error={renameError}
-          data-autofocus
-        />
-        <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={closeRename}>
-            {t("Cancel")}
-          </Button>
-          <Button
-            onClick={handleRename}
-            loading={renameMutation.isPending}
-            disabled={!renameValue.trim()}
-          >
-            {t("Save")}
-          </Button>
-        </Group>
-      </Modal>
     </>
   );
 }
